@@ -1,101 +1,54 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>AR.js Location-based (Android fix)</title>
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar.js"></script>
-    <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-        }
-        .arjs-loader {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-    </style>
-</head>
-<body>
-    <!-- Лоадер для Android -->
-    <div class="arjs-loader">
-        <div>Загрузка AR... Разрешите доступ к камере</div>
-    </div>
+<script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1.6.0/dist/aframe-master.min.js"></script>
+<script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
 
-    <a-scene 
-        vr-mode-ui="enabled: false"
-        arjs="
-            sourceType: webcam;
-            debugUIEnabled: false;
-            detectionMode: mono;
-            maxDetectionRate: 60;
-            cameraParametersUrl: https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/data/camera_para.dat
-        "
-        renderer="
-            antialias: true;
-            alpha: true;
-            logarithmicDepthBuffer: true;
-            precision: mediump;
-        ">
-        
-        <!-- Камера с настройками для Android -->
-        <a-camera 
-            gps-new-camera="gpsMinDistance: 5"
-            near="0.01"
-            far="10000">
-        </a-camera>
-        
-        <!-- Тестовый объект -->
-        <a-entity 
-            material="color: red; metalness: 0.5; roughness: 0.1"
-            geometry="primitive: box"
-            gps-new-entity-place="latitude: <ваша-широта>; longitude: <ваша-долгота>"
-            scale="5 5 5"
-            animation="property: rotation; to: 0 360 0; loop: true; dur: 5000">
-        </a-entity>
-    </a-scene>
+<style>
+  .arjs-loader {
+    height: 100%;
+    width: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
 
-    <script>
-        // Убираем лоадер после загрузки сцены
-        document.querySelector('a-scene').addEventListener('loaded', function() {
-            setTimeout(function() {
-                const loader = document.querySelector('.arjs-loader');
-                if (loader) loader.style.display = 'none';
-            }, 1500);
-        });
+  .arjs-loader div {
+    text-align: center;
+    font-size: 1.25em;
+    color: white;
+  }
+</style>
 
-        // Фикс для некоторых устройств Android
-        if (/Android/.test(navigator.userAgent)) {
-            AFRAME.registerComponent('android-fix', {
-                init: function() {
-                    const scene = this.el;
-                    if (scene.hasLoaded) {
-                        this.fixAndroid();
-                    } else {
-                        scene.addEventListener('loaded', this.fixAndroid.bind(this));
-                    }
-                },
-                fixAndroid: function() {
-                    const renderer = this.el.renderer;
-                    renderer.autoClear = false;
-                    renderer.autoClearDepth = false;
-                    renderer.autoClearColor = false;
-                    renderer.autoClearStencil = false;
-                }
-            });
-            
-            const scene = document.querySelector('a-scene');
-            scene.setAttribute('android-fix', '');
-        }
-    </script>
+<body style="margin : 0px; overflow: hidden;">
+  <!-- minimal loader shown until image descriptors are loaded -->
+  <div class="arjs-loader">
+    <div>Loading, please wait...</div>
+  </div>
+  <a-scene
+    vr-mode-ui="enabled: false;"
+    renderer="logarithmicDepthBuffer: true; precision: medium;"
+    embedded
+    arjs="trackingMethod: best; sourceType: webcam;debugUIEnabled: false;"
+  >
+    <!-- we use cors proxy to avoid cross-origin problems ATTENTION! you need to set up your server -->
+    <a-nft
+      type="nft"
+      url="your-server/https://raw.githack.com/AR-js-org/AR.js/master/aframe/examples/image-tracking/nft/trex/trex-image/trex"
+      smooth="true"
+      smoothCount="10"
+      smoothTolerance=".01"
+      smoothThreshold="5"
+    >
+      <a-entity
+        gltf-model="your-server/https://raw.githack.com/AR-js-org/AR.js/master/aframe/examples/image-tracking/nft/trex/scene.gltf"
+        scale="5 5 5"
+        position="150 300 -100"
+      >
+      </a-entity>
+    </a-nft>
+    <a-entity camera></a-entity>
+  </a-scene>
 </body>
-</html>
