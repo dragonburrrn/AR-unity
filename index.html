@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>AR.js Marker Tracking on Vercel</title>
+  <title>AR.js with OBJ/MTL Model</title>
   <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
   <script src="https://raw.githack.com/AR-js-org/AR.js/3.4.5/aframe/build/aframe-ar.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/GLTFLoader.min.js"></script>
+  <!-- Добавляем загрузчики OBJ/MTL -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/OBJLoader.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/examples/js/loaders/MTLLoader.min.js"></script>
   
   <style>
     .arjs-loader {
@@ -44,25 +46,70 @@
       preset="custom"
       url="data/hiro.patt">
       
-      <!-- GLTF модель -->
-      <a-entity
-        id="model"
-        gltf-model="models/AR.gltf"
-        scale="1 1 1"
-        position="0 0 0"
-        animation="property: rotation; to: 0 360 0; loop: true; dur: 5000"
-      ></a-entity>
+      <!-- Контейнер для OBJ модели -->
+      <a-entity id="obj-model-container"></a-entity>
     </a-marker>
     
     <a-entity camera></a-entity>
   </a-scene>
 
   <script>
-    // Скрываем лоадер после загрузки
     document.querySelector('a-scene').addEventListener('loaded', function() {
-      setTimeout(() => {
-        document.querySelector('.arjs-loader').style.display = 'none';
-      }, 1500);
+      const container = document.getElementById('obj-model-container');
+      
+      // Загружаем материалы (MTL)
+      new THREE.MTLLoader()
+        .setPath('models/')
+        .load('AR.mtl', function(materials) {
+          materials.preload();
+          
+          // Загружаем геометрию (OBJ)
+          new THREE.OBJLoader()
+            .setMaterials(materials)
+            .setPath('models/')
+            .load('AR.obj', function(object) {
+              // Настройки модели
+              object.scale.set(1, 1, 1);
+              object.position.set(0, 0, 0);
+              object.rotation.set(0, 0, 0);
+              
+              // Оптимизация для AR
+              object.traverse(function(node) {
+                if (node.isMesh) {
+                  node.material.side = THREE.DoubleSide;
+                  node.castShadow = true;
+                }
+              });
+              
+              // Добавляем анимацию вращения
+              object.userData.rotationY = 0;
+              object.userData.animate = true;
+              
+              // Добавляем модель в сцену
+              container.object3D.add(object);
+              
+              // Скрываем лоадер
+              document.querySelector('.arjs-loader').style.display = 'none';
+              
+              // Анимация
+              sceneEl.addEventListener('renderstart', function() {
+                function animate() {
+                  if (object.userData.animate) {
+                    object.userData.rotationY += 0.01;
+                    object.rotation.y = object.userData.rotationY;
+                  }
+                  requestAnimationFrame(animate);
+                }
+                animate();
+              });
+            },
+            function(xhr) {
+              console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+            },
+            function(error) {
+              console.error('Error loading OBJ model', error);
+            });
+        });
     });
   </script>
 </body>
